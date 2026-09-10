@@ -47,6 +47,7 @@ public class ArenaApplication extends Application {
         CookiePersistence.install();
 
         // 1 — Start loading the website right away (on the FX thread, hidden).
+        AppLog.info("Preloading " + ArenaConfig.HOME_URL + " behind splash…");
         preloadedWebView = WebViewFactory.createConfiguredWebView();
         WebEngine engine = preloadedWebView.getEngine();
         engine.load(ArenaConfig.HOME_URL);
@@ -70,10 +71,12 @@ public class ArenaApplication extends Application {
         splashStage.show();
         splashStage.centerOnScreen();
         splash.playShow();
+        AppLog.info("Splash screen shown.");
 
         // 3 — Transition once BOTH conditions hold: min splash time elapsed
         //     AND page load settled (success or failure). A max timeout
         //     guarantees we never get stuck on the splash.
+        Worker<Void> preloadWorker = engine.getLoadWorker();
         AtomicBoolean minElapsed = new AtomicBoolean(false);
         AtomicBoolean engineSettled = new AtomicBoolean(false);
         AtomicBoolean transitioned = new AtomicBoolean(false);
@@ -93,13 +96,15 @@ public class ArenaApplication extends Application {
 
         maxWait = new PauseTransition(Duration.millis(ArenaConfig.SPLASH_MAX_WAIT_MS));
         maxWait.setOnFinished(e -> {
+            AppLog.warning("Splash max wait (" + ArenaConfig.SPLASH_MAX_WAIT_MS
+                    + "ms) reached; showing main window anyway. Page state: "
+                    + preloadWorker.getState() + ", url: " + engine.getLocation());
             minElapsed.set(true);
             engineSettled.set(true);
             tryTransition.run();
         });
         maxWait.play();
 
-        Worker<Void> preloadWorker = engine.getLoadWorker();
         preloadWorker.stateProperty().addListener((obs, oldState, newState) -> {
             if (isSettled(newState)) {
                 engineSettled.set(true);
@@ -128,6 +133,9 @@ public class ArenaApplication extends Application {
         if (maxWait != null) {
             maxWait.stop();
         }
+        AppLog.info("Splash complete; showing main window. Page state: "
+                + preloadedWebView.getEngine().getLoadWorker().getState()
+                + ", url: " + preloadedWebView.getEngine().getLocation());
         try {
             FXMLLoader loader = new FXMLLoader(
                     Objects.requireNonNull(getClass().getResource("browser-view.fxml"), "browser-view.fxml not found"));
@@ -163,7 +171,7 @@ public class ArenaApplication extends Application {
                 fadeIn.play();
             });
         } catch (Exception ex) {
-            ex.printStackTrace();
+            AppLog.severe("Failed to build main window", ex);
             splashStage.close();
             Platform.exit();
         }
@@ -213,6 +221,7 @@ public class ArenaApplication extends Application {
                 PREFS.putDouble("window.width", stage.getWidth());
                 PREFS.putDouble("window.height", stage.getHeight());
             }
+            AppLog.fine("Window bounds saved (maximized=" + stage.isMaximized() + ").");
         } catch (Exception ignored) {
             // Persistence is a nice-to-have only.
         }

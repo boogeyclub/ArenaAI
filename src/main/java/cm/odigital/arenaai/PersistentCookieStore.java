@@ -226,7 +226,7 @@ public final class PersistentCookieStore implements CookieStore {
             }
             Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            System.err.println("[Arena] Could not save cookies to " + file + ": " + e.getMessage());
+            AppLog.warning("Could not save cookies to " + file, e);
         }
     }
 
@@ -238,8 +238,7 @@ public final class PersistentCookieStore implements CookieStore {
             }
             return bytes.toByteArray();
         } catch (IOException e) {
-            System.err.println("[Arena] Skipping cookie that cannot be saved ("
-                    + cookie.getName() + "): " + e.getMessage());
+            AppLog.warning("Skipping cookie that cannot be saved (" + cookie.getName() + "): " + e.getMessage());
             return null;
         }
     }
@@ -268,7 +267,7 @@ public final class PersistentCookieStore implements CookieStore {
         }
         try (DataInputStream in = new DataInputStream(Files.newInputStream(file))) {
             if (in.readInt() != FILE_VERSION) {
-                System.err.println("[Arena] Ignoring cookies file with unknown version: " + file);
+                AppLog.warning("Ignoring cookies file with unknown version: " + file);
                 return;
             }
             int count = in.readInt();
@@ -278,11 +277,14 @@ public final class PersistentCookieStore implements CookieStore {
                 try {
                     readCookie(new DataInputStream(new ByteArrayInputStream(blob)));
                 } catch (IOException e) {
-                    System.err.println("[Arena] Skipping one unreadable cookie: " + e.getMessage());
+                    AppLog.warning("Skipping one unreadable cookie: " + e.getMessage());
                 }
             }
+            if (!cookies.isEmpty()) {
+                AppLog.info("Restored " + cookies.size() + " persisted cookies from " + file);
+            }
         } catch (IOException e) {
-            System.err.println("[Arena] Could not load cookies from " + file + " (starting fresh): " + e.getMessage());
+            AppLog.warning("Could not load cookies from " + file + " (starting fresh)", e);
             cookies.clear();
             origins.clear();
             createdAt.clear();

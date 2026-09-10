@@ -1,5 +1,7 @@
 package cm.odigital.arenaai;
 
+import java.util.Set;
+
 /**
  * Central configuration for the Arena desktop application.
  *
@@ -48,4 +50,44 @@ public final class ArenaConfig {
     public static final double WINDOW_HEIGHT = 800;
     public static final double WINDOW_MIN_WIDTH = 1024;
     public static final double WINDOW_MIN_HEIGHT = 640;
+
+    /**
+     * When true, login popups from known identity providers stay inside the
+     * app (dedicated sign-in window sharing the app's cookies) instead of
+     * opening in the system browser — otherwise the login would complete in
+     * the wrong browser and the app would stay logged out.
+     */
+    public static final boolean OPEN_AUTH_POPUPS_IN_APP = true;
+
+    /** Hosts whose popups are treated as sign-in flows (suffix-matched). */
+    public static final Set<String> AUTH_POPUP_HOSTS = Set.of(
+            HOME_HOST,
+            "accounts.google.com",
+            "github.com",
+            "login.microsoftonline.com",
+            "microsoftonline.com",
+            "live.com",
+            "appleid.apple.com",
+            "facebook.com",
+            "x.com",
+            "twitter.com",
+            "auth0.com",
+            "okta.com",
+            "supabase.co",
+            "amazoncognito.com"
+    );
+
+    /** True if a popup to {@code host} should be treated as a sign-in flow. */
+    public static boolean isAuthPopupHost(String host) {
+        if (host == null || host.isBlank()) {
+            return false;
+        }
+        String lower = host.toLowerCase();
+        for (String known : AUTH_POPUP_HOSTS) {
+            if (lower.equals(known) || lower.endsWith("." + known)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

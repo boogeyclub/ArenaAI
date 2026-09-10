@@ -33,7 +33,8 @@ public class SplashController implements Initializable {
             "TIP — Click the address pill to copy the current page link.",
             "DID YOU KNOW — Pop-ups open in your system browser automatically.",
             "TIP — Use the home button to jump back to arena.ai anytime.",
-            "DID YOU KNOW — You stay logged in between launches. Log out anytime from the toolbar."
+            "DID YOU KNOW — You stay logged in between launches. Log out anytime from the toolbar.",
+            "TIP — Something broken? Open Logs from the toolbar to see the actual error."
     };
 
     @FXML

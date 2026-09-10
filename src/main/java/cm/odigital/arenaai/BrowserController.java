@@ -26,17 +26,22 @@ import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebHistory;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import javafx.util.Duration;
 
 import java.awt.Desktop;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
 /**
  * Controls the main window: a slim desktop browser chrome (back / forward /
- * reload / home + address pill + log out) wrapped around the preloaded Arena page.
+ * reload / home + address pill + log out + logs) wrapped around the preloaded
+ * Arena page. Navigations, load failures, engine errors and popup decisions
+ * are all recorded in {@link AppLog}.
  */
 public class BrowserController implements Initializable {
 
@@ -54,6 +59,8 @@ public class BrowserController implements Initializable {
     private Button externalButton;
     @FXML
     private Button clearDataButton;
+    @FXML
+    private Button logsButton;
     @FXML
     private Label addressPill;
     @FXML
@@ -84,6 +91,7 @@ public class BrowserController implements Initializable {
         retryButton.setOnAction(e -> {
             hideError();
             if (engine != null) {
+                AppLog.info("Retrying: " + engine.getLocation());
                 engine.reload();
             }
         });
@@ -98,6 +106,9 @@ public class BrowserController implements Initializable {
         this.webView = webView;
         this.engine = webView.getEngine();
         this.history = engine.getHistory();
+
+        AppLog.info("Main window attached to preloaded page: " + engine.getLocation());
+        JsConsoleBridge.install(engine);
 
         // Index 0 keeps the error overlay (declared in FXML) on top.
         webContainer.getChildren().add(0, webView);
@@ -127,25 +138,30 @@ public class BrowserController implements Initializable {
         loadProgress.visibleProperty().bind(worker.runningProperty());
 
         worker.stateProperty().addListener((obs, oldState, newState) -> reflectWorkerState(newState));
-        worker.exceptionProperty().addListener((obs, oldEx, newEx) -> {
-            if (newEx != null && worker.getState() == Worker.State.FAILED) {
-                showError(messageOf(newEx));
-            }
+
+        engine.locationProperty().addListener((obs, oldLoc, newLoc) -> {
+            AppLog.info("Navigated to: " + newLoc);
+            updateAddressPill(newLoc);
+        });
+        engine.titleProperty().addListener((obs, oldTitle, newTitle) -> {
+            AppLog.fine("Page title: " + newTitle);
+            updateWindowTitle(newTitle);
         });
 
-        engine.locationProperty().addListener((obs, oldLoc, newLoc) -> updateAddressPill(newLoc));
-        engine.titleProperty().addListener((obs, oldTitle, newTitle) -> updateWindowTitle(newTitle));
-
-        // Links that want a new window (target="_blank", window.open, …) open
-        // in the user's system browser instead of a second app window.
+        // Popup handling: sign-in flows stay in-app (dedicated window sharing
+        // the app's cookies), everything else opens in the system browser.
         engine.setCreatePopupHandler(features -> {
-            WebEngine popupEngine = new WebView().getEngine();
+            WebView popupView = new WebView();
+            popupView.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+            WebEngine popupEngine = popupView.getEngine();
+            popupEngine.setUserAgent(ArenaConfig.USER_AGENT);
+            AppLog.fine("Popup requested by page; waiting for its URL…");
             popupEngine.locationProperty().addListener(new ChangeListener<>() {
                 @Override
                 public void changed(ObservableValue<? extends String> obs, String oldLoc, String newLoc) {
                     if (newLoc != null && !newLoc.isBlank() && !"about:blank".equals(newLoc)) {
-                        openInSystemBrowser(newLoc);
                         obs.removeListener(this);
+                        handlePopup(popupView, newLoc);
                     }
                 }
             });
@@ -154,6 +170,7 @@ public class BrowserController implements Initializable {
 
         // JavaScript dialogs → native JavaFX dialogs.
         engine.setOnAlert(event -> {
+            AppLog.fine("JS alert shown: " + event.getData());
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle(ArenaConfig.APP_TITLE);
             alert.setHeaderText("arena.ai says:");
@@ -165,16 +182,22 @@ public class BrowserController implements Initializable {
             alert.setTitle(ArenaConfig.APP_TITLE);
             alert.setHeaderText("arena.ai asks:");
             Optional<ButtonType> result = alert.showAndWait();
-            return result.isPresent() && result.get() == ButtonType.OK;
+            boolean confirmed = result.isPresent() && result.get() == ButtonType.OK;
+            AppLog.fine("JS confirm: \"" + message + "\" -> " + (confirmed ? "OK" : "Cancel"));
+            return confirmed;
         });
         engine.setPromptHandler((PromptData data) -> {
             TextInputDialog dialog = new TextInputDialog(data.getDefaultValue());
             dialog.setTitle(ArenaConfig.APP_TITLE);
             dialog.setHeaderText(data.getMessage());
-            return dialog.showAndWait().orElse(null);
+            String answer = dialog.showAndWait().orElse(null);
+            AppLog.fine("JS prompt: \"" + data.getMessage() + "\" -> "
+                    + (answer != null ? "answered" : "cancelled"));
+            return answer;
         });
 
-        engine.setOnError(event -> System.err.println("[Arena WebView] " + event.getMessage()));
+        engine.setOnError(event -> AppLog.severe("[WebView engine error] " + event.getMessage()
+                + " (url: " + engine.getLocation() + ")", event.getException()));
     }
 
     private void reflectWorkerState(Worker.State state) {
@@ -185,13 +208,21 @@ public class BrowserController implements Initializable {
             case RUNNING, SCHEDULED -> hideError();
             case SUCCEEDED -> {
                 hideError();
+                AppLog.info("Loaded: " + engine.getLocation());
                 updateWindowTitle(engine.getTitle());
             }
-            case FAILED -> showError(messageOf(engine.getLoadWorker().getException()));
+            case FAILED -> {
+                Throwable ex = engine.getLoadWorker().getException();
+                AppLog.severe("Page load failed: " + engine.getLocation(), ex);
+                showError(messageOf(ex));
+            }
             case CANCELLED -> {
                 // User navigated away mid-load; only show the overlay if nothing loaded.
                 if (engine.getLocation() == null || engine.getLocation().isBlank()) {
+                    AppLog.warning("Navigation cancelled before anything loaded.");
                     showError("Navigation was cancelled before anything loaded.");
+                } else {
+                    AppLog.fine("Load cancelled for: " + engine.getLocation());
                 }
             }
             default -> {
@@ -207,15 +238,49 @@ public class BrowserController implements Initializable {
         return "The page could not be loaded (" + ex.getMessage() + "). Check your internet connection and retry.";
     }
 
+    // --- Popups ---
+
+    private void handlePopup(WebView popupView, String url) {
+        String host = hostOf(url);
+        if (ArenaConfig.OPEN_AUTH_POPUPS_IN_APP && ArenaConfig.isAuthPopupHost(host)) {
+            AppLog.info("Popup (sign-in) kept in-app: " + url);
+            JsConsoleBridge.install(popupView.getEngine());
+            Window owner = root.getScene() != null ? root.getScene().getWindow() : null;
+            AuthPopupDialog.show(popupView, url, owner);
+        } else {
+            AppLog.info("Popup opened in system browser: " + url);
+            openInSystemBrowser(url);
+        }
+    }
+
+    private static String hostOf(String url) {
+        if (url == null || url.isBlank()) {
+            return "";
+        }
+        try {
+            String host = new URI(url).getHost();
+            return host == null ? "" : host;
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
     // --- Toolbar / navigation ---
 
     private void wireToolbar() {
         backButton.setOnAction(e -> go(-1));
         forwardButton.setOnAction(e -> go(1));
-        reloadButton.setOnAction(e -> engine.reload());
-        homeButton.setOnAction(e -> engine.load(ArenaConfig.HOME_URL));
+        reloadButton.setOnAction(e -> {
+            AppLog.info("Reload: " + engine.getLocation());
+            engine.reload();
+        });
+        homeButton.setOnAction(e -> {
+            AppLog.info("Home: " + ArenaConfig.HOME_URL);
+            engine.load(ArenaConfig.HOME_URL);
+        });
         externalButton.setOnAction(e -> openInSystemBrowser(currentLocation()));
         clearDataButton.setOnAction(e -> clearBrowsingData());
+        logsButton.setOnAction(e -> openLogs());
     }
 
     private void wireHistoryButtons() {
@@ -283,6 +348,7 @@ public class BrowserController implements Initializable {
         ClipboardContent content = new ClipboardContent();
         content.putString(currentLocation());
         Clipboard.getSystemClipboard().setContent(content);
+        AppLog.fine("Copied page URL to clipboard: " + currentLocation());
 
         String original = addressPill.getText();
         addressPill.setText("✓ Link copied");
@@ -321,7 +387,44 @@ public class BrowserController implements Initializable {
         } catch (Exception ignored) {
             // Storage may be unavailable on some pages — cookies are the important part.
         }
+        AppLog.info("Browsing data cleared by user; returning home.");
         engine.load(ArenaConfig.HOME_URL);
+    }
+
+    // --- Logs ---
+
+    /** Opens the current log file (or folder) so errors can actually be seen. */
+    private void openLogs() {
+        Path file = AppLog.getLogFile();
+        Path dir = AppLog.getLogDir();
+        AppLog.info("Opening logs (file: " + file + ", dir: " + dir + ")");
+        try {
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+                if (file != null && Files.isRegularFile(file)) {
+                    Desktop.getDesktop().open(file.toFile());
+                    return;
+                }
+                if (dir != null && Files.isDirectory(dir)) {
+                    Desktop.getDesktop().open(dir.toFile());
+                    return;
+                }
+            }
+        } catch (Exception ex) {
+            AppLog.warning("Could not open log file", ex);
+        }
+        String location = file != null ? file.toString() : (dir != null ? dir.toString() : "unavailable");
+        try {
+            ClipboardContent content = new ClipboardContent();
+            content.putString(location);
+            Clipboard.getSystemClipboard().setContent(content);
+        } catch (Exception ignored) {
+            // Clipboard is best-effort here.
+        }
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(ArenaConfig.APP_TITLE);
+        alert.setHeaderText("Log location (path copied)");
+        alert.setContentText(location);
+        alert.showAndWait();
     }
 
     // --- Error overlay ---
@@ -349,11 +452,12 @@ public class BrowserController implements Initializable {
         try {
             if (url != null && Desktop.isDesktopSupported()
                     && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                AppLog.info("Opened in system browser: " + url);
                 Desktop.getDesktop().browse(new URI(url));
                 return;
             }
         } catch (Exception ex) {
-            System.err.println("[Arena] Could not open system browser: " + ex.getMessage());
+            AppLog.warning("Could not open system browser for " + url, ex);
         }
         // Fallback: copy the link so the user can paste it into a browser.
         try {

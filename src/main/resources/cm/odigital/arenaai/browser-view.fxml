@@ -54,6 +54,11 @@
                         <Tooltip text="Log out and clear browsing data"/>
                     </tooltip>
                 </Button>
+                <Button fx:id="logsButton" text="Logs" styleClass="nav-button">
+                    <tooltip>
+                        <Tooltip text="Open the log file to see errors"/>
+                    </tooltip>
+                </Button>
             </HBox>
             <ProgressBar fx:id="loadProgress" styleClass="load-progress" maxWidth="Infinity" prefHeight="3" progress="0"/>
         </VBox>

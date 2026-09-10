@@ -18,14 +18,7 @@ public final class CookiePersistence {
 
     /** Location of the cookie file: {@code %APPDATA%\Arena\cookies.dat} on Windows. */
     public static Path defaultCookieFile() {
-        String appData = System.getenv("APPDATA");
-        Path dir;
-        if (appData != null && !appData.isBlank()) {
-            dir = Path.of(appData, "Arena");
-        } else {
-            dir = Path.of(System.getProperty("user.home"), ".arena");
-        }
-        return dir.resolve("cookies.dat");
+        return AppPaths.appDataDir().resolve("cookies.dat");
     }
 
     /**
@@ -38,8 +31,10 @@ public final class CookiePersistence {
                 && manager.getCookieStore() instanceof PersistentCookieStore) {
             return; // already installed
         }
-        CookieManager manager = new CookieManager(new PersistentCookieStore(), CookiePolicy.ACCEPT_ALL);
+        Path file = defaultCookieFile();
+        CookieManager manager = new CookieManager(new PersistentCookieStore(file), CookiePolicy.ACCEPT_ALL);
         CookieHandler.setDefault(manager);
+        AppLog.info("Persistent cookies enabled (" + file + ")");
     }
 
     /**
