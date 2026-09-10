@@ -4,6 +4,10 @@ import javafx.application.Application;
 
 public class Launcher {
     public static void main(String[] args) {
-        Application.launch(HelloApplication.class, args);
+        AppLog.setup();
+        AppLog.info("Starting " + ArenaConfig.APP_TITLE + " " + ArenaConfig.APP_VERSION
+                + " (Java " + System.getProperty("java.version")
+                + ", " + System.getProperty("os.name") + " " + System.getProperty("os.version") + ")");
+        Application.launch(ArenaApplication.class, args);
     }
 }

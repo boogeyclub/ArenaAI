@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="root" styleClass="splash-root" xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml" fx:controller="cm.odigital.arenaai.SplashController">
+    <!-- Padding leaves room for the card's drop shadow in the transparent window. -->
+    <padding>
+        <Insets top="24" right="24" bottom="24" left="24"/>
+    </padding>
+    <VBox styleClass="splash-card" alignment="CENTER" spacing="8" prefWidth="400" prefHeight="320" maxWidth="400">
+        <padding>
+            <Insets top="28" right="36" bottom="24" left="36"/>
+        </padding>
+        <ImageView fx:id="logoView" fitWidth="76" fitHeight="76" preserveRatio="true" smooth="true"/>
+        <Label text="ARENA" styleClass="splash-logo-text"/>
+        <Label text="D E S K T O P" styleClass="splash-sub"/>
+        <!-- Fixed min height so rotating tips don't make the card jump. -->
+        <Label fx:id="quoteLabel" styleClass="splash-quote" wrapText="true"
+               alignment="CENTER" textAlignment="CENTER" maxWidth="Infinity" minHeight="36"/>
+        <VBox spacing="6" maxWidth="Infinity">
+            <Label fx:id="statusLabel" styleClass="splash-status" text="Starting…"/>
+            <ProgressBar fx:id="progressBar" maxWidth="Infinity" prefHeight="6" progress="-1"/>
+        </VBox>
+    </VBox>
+</StackPane>

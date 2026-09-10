@@ -1,0 +1,52 @@
+/* Discord-inspired splash screen theme. */
+
+.splash-root {
+    -fx-background-color: transparent;
+}
+
+.splash-card {
+    -fx-background-color: linear-gradient(to bottom right, #26262e 0%, #17171d 100%);
+    -fx-background-radius: 18;
+    -fx-border-color: rgba(255, 255, 255, 0.09);
+    -fx-border-width: 1;
+    -fx-border-radius: 18;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 36, 0.35, 0, 12);
+}
+
+.splash-logo-text {
+    -fx-font-size: 38px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #ffffff;
+}
+
+.splash-sub {
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #949ba4;
+}
+
+.splash-quote {
+    -fx-font-size: 12px;
+    -fx-text-fill: #b5bac1;
+}
+
+.splash-status {
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #dbdee1;
+}
+
+.splash-card .progress-bar {
+    -fx-background-color: transparent;
+}
+
+.splash-card .progress-bar > .track {
+    -fx-background-color: rgba(255, 255, 255, 0.12);
+    -fx-background-radius: 4;
+}
+
+.splash-card .progress-bar > .bar {
+    -fx-background-color: #5865f2;
+    -fx-background-radius: 4;
+    -fx-background-insets: 0;
+}

@@ -2,6 +2,10 @@ module cm.odigital.arenaai {
     requires javafx.controls;
     requires javafx.fxml;
     requires javafx.web;
+    requires java.desktop;
+    requires java.logging;
+    requires java.prefs;
+    requires jdk.jsobject;
 
     requires org.controlsfx.controls;
     requires com.dlsc.formsfx;
