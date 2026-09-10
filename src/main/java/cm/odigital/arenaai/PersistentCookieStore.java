@@ -93,7 +93,24 @@ public final class PersistentCookieStore implements CookieStore {
             }
             result.add(cookie);
         }
+        if (ArenaConfig.LOG_COOKIE_NAMES) {
+            AppLog.fine("Cookies for " + uri + " -> " + namesOf(result));
+        }
         return result;
+    }
+
+    private static String namesOf(List<HttpCookie> result) {
+        if (result.isEmpty()) {
+            return "(none)";
+        }
+        StringBuilder names = new StringBuilder();
+        for (HttpCookie cookie : result) {
+            if (names.length() > 0) {
+                names.append(", ");
+            }
+            names.append(cookie.getName());
+        }
+        return names.toString();
     }
 
     @Override

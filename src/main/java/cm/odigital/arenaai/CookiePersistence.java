@@ -26,6 +26,10 @@ public final class CookiePersistence {
      * its cookies through it). Call once, before creating any WebView.
      */
     public static synchronized void install() {
+        if (!ArenaConfig.USE_PERSISTENT_COOKIES) {
+            AppLog.info("Persistent cookies disabled; using WebView default (in-memory) cookie handling.");
+            return;
+        }
         CookieHandler current = CookieHandler.getDefault();
         if (current instanceof CookieManager manager
                 && manager.getCookieStore() instanceof PersistentCookieStore) {

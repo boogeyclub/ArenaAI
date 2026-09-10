@@ -84,6 +84,14 @@ public final class ArenaConfig {
      */
     public static final boolean LOG_COOKIE_NAMES = false;
 
+    /**
+     * When false, no custom cookie handler is installed and WebView uses its
+     * built-in in-memory cookies (nothing persists between launches, and
+     * Log out cannot clear HttpOnly cookies). Useful to A/B test whether the
+     * persistent store affects a login flow.
+     */
+    public static final boolean USE_PERSISTENT_COOKIES = true;
+
     /** True if a popup to {@code host} should be treated as a sign-in flow. */
     public static boolean isAuthPopupHost(String host) {
         if (host == null || host.isBlank()) {

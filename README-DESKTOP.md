@@ -135,7 +135,17 @@ desktop shortcut and install-dir chooser.
   page still reports a problem (so unsent chat drafts are never wiped).
 - To trace cookie/session issues without leaking secrets, set
   `LOG_COOKIE_NAMES = true` in `ArenaConfig`: cookie names (never values)
-  are then logged to the file at FINE level.
+  are then logged to the file at FINE level — both when stored (`Cookie
+  stored: …`) and when sent with each request (`Cookies for <url> -> …`).
+  If a request shows `(none)` where a session cookie is expected, the store
+  isn't sending it; if no `Cookies for` lines appear at all, WebView isn't
+  consulting the custom store.
+- To A/B test the persistent store itself, set `USE_PERSISTENT_COOKIES =
+  false`: the app then uses WebView's built-in in-memory cookies. If login
+  works with the flag off but fails with it on, the bug is in our store.
+- If login fails with "Auth session missing" right after launch, first try
+  **Log out** + retry: a stale restored session cookie may be poisoning the
+  flow (the cookie file only tracks `Max-Age`, not server-side expiry).
 
 ## Good to know / limitations
 
