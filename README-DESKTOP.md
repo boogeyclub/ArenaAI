@@ -109,6 +109,10 @@ desktop shortcut and install-dir chooser.
 - The **Log out** toolbar button (with confirmation) clears all cookies +
   the current site's local/session storage and returns to the home page.
 - Cache, history and `localStorage` are otherwise in-memory and vanish on exit.
+- Cookies are normalized to Netscape (Version 0) format when sent: the JDK
+  otherwise serializes modern `Max-Age` cookies as RFC 2965
+  (`$Version=1; …`), which current servers fail to parse — this used to make
+  arena.ai's own API routes report a missing session.
 
 ## Logs & diagnosing errors (e.g. Google sign-in)
 

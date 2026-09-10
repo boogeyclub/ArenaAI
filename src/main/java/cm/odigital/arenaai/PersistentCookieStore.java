@@ -91,6 +91,15 @@ public final class PersistentCookieStore implements CookieStore {
             if (cookie.getSecure() && !secureProtocol) {
                 continue;
             }
+            // Force Netscape (Version 0) format: the JDK parses any modern
+            // Max-Age cookie as RFC 2965 (Version 1) and would otherwise send
+            // it back as `$Version=1; name="value"; ...`, which modern servers
+            // fail to parse — the session cookie arrives but the server can't
+            // read it ("Auth session missing"). Version 0 (name=value) works
+            // everywhere. This also self-heals v1 cookies from older files.
+            if (cookie.getVersion() != 0) {
+                cookie.setVersion(0);
+            }
             result.add(cookie);
         }
         if (ArenaConfig.LOG_COOKIE_NAMES) {
