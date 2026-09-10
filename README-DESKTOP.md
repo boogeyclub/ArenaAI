@@ -9,6 +9,8 @@ A Windows desktop wrapper for **https://arena.ai/** built with JavaFX:
 3. The main window is a slim desktop browser: back / forward / reload / home,
    address pill, thin load-progress bar, offline/error overlay, sign-in popups
    kept in-app, other pop-ups opened in your system browser.
+4. **Automatic sign-in error detection**: if a page reports an auth failure
+   (e.g. `Auth session missing`), the app logs it and shows guidance.
 
 > Note: the original `HelloApplication` / `hello-view.fxml` sample files are
 > still in the repo but are no longer used. The entry point is now
@@ -31,7 +33,7 @@ the repo ships the `mvnw` wrapper).
 | `.../ArenaApplication.java` | App orchestration: preload site → splash → fade to main window; remembers window size |
 | `.../ArenaConfig.java` | One place for the URL, timings, user agent, window defaults, auth-popup hosts |
 | `.../SplashController.java` | Splash logic: tips rotation, status text, progress binding, fade in/out |
-| `.../BrowserController.java` | Main window: toolbar, history, address pill, error overlay, shortcuts, JS dialogs, pop-up handling, log-out, logs |
+| `.../BrowserController.java` | Main window: toolbar, history, address pill, error overlay, shortcuts, JS dialogs, pop-up handling, log-out, logs, sign-in recovery |
 | `.../WebViewFactory.java` | Builds the pre-configured `WebView` (JS on, desktop Chrome-on-Windows user agent) |
 | `.../CookiePersistence.java` | Installs the file-backed cookie handler; `clearAll()` for log-out |
 | `.../PersistentCookieStore.java` | `CookieStore` that saves cookies to disk on every change and reloads them on launch |
@@ -39,6 +41,7 @@ the repo ships the `mvnw` wrapper).
 | `.../AppLog.java` | Central logging: console + rotating files under `%APPDATA%\Arena\logs` |
 | `.../JsConsoleBridge.java` | Captures page JS console output + uncaught JS errors into the log |
 | `.../AuthPopupDialog.java` | In-app sign-in window for login popups (shares the app's cookies) |
+| `.../AuthErrorWatcher.java` | Scans loaded pages for known sign-in failure signatures |
 | `src/main/resources/cm/odigital/arenaai/splash-view.fxml` | Splash layout (borderless card) |
 | `src/main/resources/cm/odigital/arenaai/browser-view.fxml` | Main window layout (toolbar + `WebView` container + error overlay) |
 | `.../css/splash.css`, `.../css/browser.css` | Discord-ish dark themes |
@@ -124,6 +127,15 @@ desktop shortcut and install-dir chooser.
   `ArenaConfig`) now open in an **in-app sign-in window** sharing the app's
   cookies, instead of the system browser where the login couldn't complete.
   Set `OPEN_AUTH_POPUPS_IN_APP = false` to restore the old behavior.
+- **Automatic detection:** loaded pages (main window and sign-in window) are
+  scanned for known sign-in failure signatures (`Auth session missing`,
+  `disallowed_useragent`, …). On a match the app logs a SEVERE entry and —
+  in the main window — shows a guidance dialog with an Open Logs shortcut.
+  After the sign-in window closes, the app offers a reload, but only if the
+  page still reports a problem (so unsent chat drafts are never wiped).
+- To trace cookie/session issues without leaking secrets, set
+  `LOG_COOKIE_NAMES = true` in `ArenaConfig`: cookie names (never values)
+  are then logged to the file at FINE level.
 
 ## Good to know / limitations
 

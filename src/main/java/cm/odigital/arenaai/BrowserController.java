@@ -9,6 +9,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
@@ -40,8 +41,8 @@ import java.util.ResourceBundle;
 /**
  * Controls the main window: a slim desktop browser chrome (back / forward /
  * reload / home + address pill + log out + logs) wrapped around the preloaded
- * Arena page. Navigations, load failures, engine errors and popup decisions
- * are all recorded in {@link AppLog}.
+ * Arena page. Navigations, load failures, engine errors, popup decisions and
+ * detected sign-in problems are all recorded in {@link AppLog}.
  */
 public class BrowserController implements Initializable {
 
@@ -109,6 +110,7 @@ public class BrowserController implements Initializable {
 
         AppLog.info("Main window attached to preloaded page: " + engine.getLocation());
         JsConsoleBridge.install(engine);
+        AuthErrorWatcher.watch(engine, this::onAuthErrorDetected);
 
         // Index 0 keeps the error overlay (declared in FXML) on top.
         webContainer.getChildren().add(0, webView);
@@ -246,7 +248,7 @@ public class BrowserController implements Initializable {
             AppLog.info("Popup (sign-in) kept in-app: " + url);
             JsConsoleBridge.install(popupView.getEngine());
             Window owner = root.getScene() != null ? root.getScene().getWindow() : null;
-            AuthPopupDialog.show(popupView, url, owner);
+            AuthPopupDialog.show(popupView, url, owner, this::offerReloadIfStillSignedOut);
         } else {
             AppLog.info("Popup opened in system browser: " + url);
             openInSystemBrowser(url);
@@ -263,6 +265,57 @@ public class BrowserController implements Initializable {
         } catch (Exception e) {
             return "";
         }
+    }
+
+    // --- Sign-in recovery ---
+
+    /** A page explicitly reports a sign-in failure: log it loudly and guide the user. */
+    private void onAuthErrorDetected(String detail) {
+        AppLog.severe("Sign-in issue detected on " + engine.getLocation() + " — " + detail);
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle(ArenaConfig.APP_TITLE);
+        alert.setHeaderText("The page reports a sign-in error");
+        alert.setContentText(detail
+                + "\n\n• Complete the Google sign-in inside the app's sign-in window, not your system browser."
+                + "\n• After signing in, close the sign-in window."
+                + "\n• Still stuck? Open Logs and look for [JS error] lines.");
+        ButtonType openLogs = new ButtonType("Open Logs");
+        ButtonType dismiss = new ButtonType("Dismiss", ButtonBar.ButtonData.CANCEL_CLOSE);
+        alert.getButtonTypes().setAll(openLogs, dismiss);
+        Optional<ButtonType> choice = alert.showAndWait();
+        if (choice.isPresent() && choice.get() == openLogs) {
+            openLogs();
+        }
+    }
+
+    /**
+     * After the sign-in window closes, offer a reload — but only if the page
+     * still reports a problem, so unsent chat drafts are never wiped needlessly.
+     */
+    private void offerReloadIfStillSignedOut() {
+        PauseTransition settle = new PauseTransition(Duration.seconds(1.5));
+        settle.setOnFinished(e -> {
+            String match = AuthErrorWatcher.detect(engine);
+            if (match == null) {
+                AppLog.info("Sign-in window closed; main page reports no auth errors.");
+                return;
+            }
+            AppLog.info("Main page still reports a sign-in issue after the window closed; offering reload.");
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setTitle(ArenaConfig.APP_TITLE);
+            confirm.setHeaderText("Still looks signed out");
+            confirm.setContentText("The page still reports a sign-in problem. Reload it to pick up the session?"
+                    + "\n\n(" + match + ")");
+            ButtonType reload = new ButtonType("Reload page");
+            ButtonType later = new ButtonType("Not now", ButtonBar.ButtonData.CANCEL_CLOSE);
+            confirm.getButtonTypes().setAll(reload, later);
+            Optional<ButtonType> choice = confirm.showAndWait();
+            if (choice.isPresent() && choice.get() == reload) {
+                AppLog.info("Reloading after sign-in window closed: " + engine.getLocation());
+                engine.reload();
+            }
+        });
+        settle.play();
     }
 
     // --- Toolbar / navigation ---

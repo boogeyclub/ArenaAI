@@ -77,6 +77,13 @@ public final class ArenaConfig {
             "amazoncognito.com"
     );
 
+    /**
+     * When true, cookie names (never values) are logged whenever stored.
+     * FINE level, so they only land in the log file — handy to diagnose
+     * lost login sessions without leaking secrets.
+     */
+    public static final boolean LOG_COOKIE_NAMES = false;
+
     /** True if a popup to {@code host} should be treated as a sign-in flow. */
     public static boolean isAuthPopupHost(String host) {
         if (host == null || host.isBlank()) {

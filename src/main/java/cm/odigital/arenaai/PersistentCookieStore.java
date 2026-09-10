@@ -64,6 +64,10 @@ public final class PersistentCookieStore implements CookieStore {
             origins.put(cookie, uri);
         }
         createdAt.put(cookie, System.currentTimeMillis());
+        if (ArenaConfig.LOG_COOKIE_NAMES) {
+            AppLog.fine("Cookie stored: " + cookie.getName()
+                    + " (domain=" + cookie.getDomain() + ", path=" + cookie.getPath() + ")");
+        }
         saveToFile();
     }
 
