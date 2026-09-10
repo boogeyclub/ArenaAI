@@ -32,7 +32,8 @@ public class SplashController implements Initializable {
             "TIP — Alt+Left / Alt+Right moves back and forward.",
             "TIP — Click the address pill to copy the current page link.",
             "DID YOU KNOW — Pop-ups open in your system browser automatically.",
-            "TIP — Use the home button to jump back to arena.ai anytime."
+            "TIP — Use the home button to jump back to arena.ai anytime.",
+            "DID YOU KNOW — You stay logged in between launches. Log out anytime from the toolbar."
     };
 
     @FXML

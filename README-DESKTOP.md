@@ -31,8 +31,10 @@ the repo ships the `mvnw` wrapper).
 | `.../ArenaApplication.java` | App orchestration: preload site → splash → fade to main window; remembers window size |
 | `.../ArenaConfig.java` | One place for the URL, timings, user agent, window defaults |
 | `.../SplashController.java` | Splash logic: tips rotation, status text, progress binding, fade in/out |
-| `.../BrowserController.java` | Main window: toolbar, history, address pill, error overlay, shortcuts, JS dialogs, pop-up handling |
+| `.../BrowserController.java` | Main window: toolbar, history, address pill, error overlay, shortcuts, JS dialogs, pop-up handling, log-out |
 | `.../WebViewFactory.java` | Builds the pre-configured `WebView` (JS on, desktop Chrome-on-Windows user agent) |
+| `.../CookiePersistence.java` | Installs the file-backed cookie handler; `clearAll()` for log-out |
+| `.../PersistentCookieStore.java` | `CookieStore` that saves cookies to disk on every change and reloads them on launch |
 | `src/main/resources/cm/odigital/arenaai/splash-view.fxml` | Splash layout (borderless card) |
 | `src/main/resources/cm/odigital/arenaai/browser-view.fxml` | Main window layout (toolbar + `WebView` container + error overlay) |
 | `.../css/splash.css`, `.../css/browser.css` | Discord-ish dark themes |
@@ -88,6 +90,18 @@ desktop shortcut and install-dir chooser.
 | `Alt+Left` / `Alt+Right` | Back / forward |
 | `Alt+Home` | Go to arena.ai home |
 | Click address pill | Copy current page URL |
+
+## Browsing data & privacy
+
+- **Cookies persist** in `%APPDATA%\Arena\cookies.dat` (on other OSes:
+  `~/.arena/cookies.dat`), so you **stay logged in** to arena.ai between
+  launches. `Max-Age` cookies are aged by the time spent away; expired ones
+  are dropped on load.
+- The cookie file is a plain binary file, **not encrypted** — anyone with
+  access to your Windows user account could read your session cookies.
+- The **Log out** toolbar button (with confirmation) clears all cookies +
+  the current site's local/session storage and returns to the home page.
+- Cache, history and `localStorage` are otherwise in-memory and vanish on exit.
 
 ## Good to know / limitations
 

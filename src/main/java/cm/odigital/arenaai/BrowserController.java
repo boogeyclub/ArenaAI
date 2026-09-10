@@ -36,7 +36,7 @@ import java.util.ResourceBundle;
 
 /**
  * Controls the main window: a slim desktop browser chrome (back / forward /
- * reload / home + address pill) wrapped around the preloaded Arena page.
+ * reload / home + address pill + log out) wrapped around the preloaded Arena page.
  */
 public class BrowserController implements Initializable {
 
@@ -52,6 +52,8 @@ public class BrowserController implements Initializable {
     private Button homeButton;
     @FXML
     private Button externalButton;
+    @FXML
+    private Button clearDataButton;
     @FXML
     private Label addressPill;
     @FXML
@@ -213,6 +215,7 @@ public class BrowserController implements Initializable {
         reloadButton.setOnAction(e -> engine.reload());
         homeButton.setOnAction(e -> engine.load(ArenaConfig.HOME_URL));
         externalButton.setOnAction(e -> openInSystemBrowser(currentLocation()));
+        clearDataButton.setOnAction(e -> clearBrowsingData());
     }
 
     private void wireHistoryButtons() {
@@ -295,6 +298,30 @@ public class BrowserController implements Initializable {
         if (root.getScene() != null && root.getScene().getWindow() instanceof Stage stage) {
             stage.setTitle(title);
         }
+    }
+
+    // --- Clear browsing data ---
+
+    /**
+     * Logs out everywhere: clears persisted cookies (+ current site storage)
+     * after a confirmation, then returns home.
+     */
+    private void clearBrowsingData() {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle(ArenaConfig.APP_TITLE);
+        confirm.setHeaderText("Log out and clear browsing data?");
+        confirm.setContentText("This clears cookies and site data, logging you out of arena.ai.");
+        Optional<ButtonType> result = confirm.showAndWait();
+        if (result.isEmpty() || result.get() != ButtonType.OK) {
+            return;
+        }
+        CookiePersistence.clearAll();
+        try {
+            engine.executeScript("try { localStorage.clear(); sessionStorage.clear(); } catch (e) {}");
+        } catch (Exception ignored) {
+            // Storage may be unavailable on some pages — cookies are the important part.
+        }
+        engine.load(ArenaConfig.HOME_URL);
     }
 
     // --- Error overlay ---

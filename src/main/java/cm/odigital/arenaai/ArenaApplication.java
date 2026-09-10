@@ -43,6 +43,9 @@ public class ArenaApplication extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        // 0 — File-backed cookies (stay logged in). Must precede any WebView creation.
+        CookiePersistence.install();
+
         // 1 — Start loading the website right away (on the FX thread, hidden).
         preloadedWebView = WebViewFactory.createConfiguredWebView();
         WebEngine engine = preloadedWebView.getEngine();

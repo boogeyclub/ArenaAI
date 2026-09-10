@@ -49,6 +49,11 @@
                         <Tooltip text="Open current page in system browser"/>
                     </tooltip>
                 </Button>
+                <Button fx:id="clearDataButton" text="Log out" styleClass="nav-button">
+                    <tooltip>
+                        <Tooltip text="Log out and clear browsing data"/>
+                    </tooltip>
+                </Button>
             </HBox>
             <ProgressBar fx:id="loadProgress" styleClass="load-progress" maxWidth="Infinity" prefHeight="3" progress="0"/>
         </VBox>
