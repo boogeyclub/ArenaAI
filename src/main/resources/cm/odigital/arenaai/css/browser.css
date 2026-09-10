@@ -1,0 +1,98 @@
+/* Main window: dark desktop-browser chrome. */
+
+.browser-root {
+    -fx-background-color: #1e1f22;
+}
+
+.browser-toolbar {
+    -fx-background-color: #2b2d31;
+    -fx-border-color: rgba(0, 0, 0, 0.35);
+    -fx-border-width: 0 0 1 0;
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #dbdee1;
+    -fx-font-size: 17px;
+    -fx-font-weight: 700;
+    -fx-min-width: 38px;
+    -fx-min-height: 32px;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.nav-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.09);
+}
+
+.nav-button:pressed {
+    -fx-background-color: rgba(255, 255, 255, 0.16);
+}
+
+.nav-button:disabled {
+    -fx-opacity: 0.35;
+}
+
+.address-pill {
+    -fx-background-color: #1e1f22;
+    -fx-text-fill: #b5bac1;
+    -fx-font-size: 13px;
+    -fx-background-radius: 8;
+    -fx-padding: 7 14 7 14;
+    -fx-cursor: hand;
+}
+
+.address-pill:hover {
+    -fx-text-fill: #ffffff;
+}
+
+.load-progress {
+    -fx-background-color: transparent;
+}
+
+.load-progress > .track {
+    -fx-background-color: transparent;
+}
+
+.load-progress > .bar {
+    -fx-background-color: #5865f2;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+}
+
+.web-container {
+    -fx-background-color: #1e1f22;
+}
+
+.error-overlay {
+    -fx-background-color: #1e1f22;
+}
+
+.error-icon {
+    -fx-font-size: 44px;
+    -fx-text-fill: #f0b232;
+}
+
+.error-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #ffffff;
+}
+
+.error-detail {
+    -fx-font-size: 13px;
+    -fx-text-fill: #b5bac1;
+}
+
+.primary-button {
+    -fx-background-color: #5865f2;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: 700;
+    -fx-background-radius: 6;
+    -fx-padding: 8 22 8 22;
+    -fx-cursor: hand;
+}
+
+.primary-button:hover {
+    -fx-background-color: #4752c4;
+}

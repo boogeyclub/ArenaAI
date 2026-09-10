@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane fx:id="root" styleClass="browser-root" xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml" fx:controller="cm.odigital.arenaai.BrowserController">
+    <top>
+        <VBox spacing="0">
+            <HBox styleClass="browser-toolbar" alignment="CENTER_LEFT" spacing="6">
+                <padding>
+                    <Insets top="8" right="12" bottom="8" left="12"/>
+                </padding>
+                <Button fx:id="backButton" text="‹" styleClass="nav-button">
+                    <tooltip>
+                        <Tooltip text="Back (Alt+Left)"/>
+                    </tooltip>
+                </Button>
+                <Button fx:id="forwardButton" text="›" styleClass="nav-button">
+                    <tooltip>
+                        <Tooltip text="Forward (Alt+Right)"/>
+                    </tooltip>
+                </Button>
+                <Button fx:id="reloadButton" text="⟳" styleClass="nav-button">
+                    <tooltip>
+                        <Tooltip text="Reload (F5)"/>
+                    </tooltip>
+                </Button>
+                <Button fx:id="homeButton" text="⌂" styleClass="nav-button">
+                    <tooltip>
+                        <Tooltip text="Home (Alt+Home)"/>
+                    </tooltip>
+                </Button>
+                <Label fx:id="addressPill" styleClass="address-pill" text="arena.ai"
+                       maxWidth="Infinity" HBox.hgrow="ALWAYS">
+                    <HBox.margin>
+                        <Insets left="6" right="6"/>
+                    </HBox.margin>
+                </Label>
+                <Button fx:id="externalButton" text="↗" styleClass="nav-button">
+                    <tooltip>
+                        <Tooltip text="Open current page in system browser"/>
+                    </tooltip>
+                </Button>
+            </HBox>
+            <ProgressBar fx:id="loadProgress" styleClass="load-progress" maxWidth="Infinity" prefHeight="3" progress="0"/>
+        </VBox>
+    </top>
+    <center>
+        <StackPane fx:id="webContainer" styleClass="web-container">
+            <!-- The preloaded WebView is inserted at index 0 at runtime so this
+                 overlay stays on top and only appears on load failures. -->
+            <StackPane fx:id="errorOverlay" styleClass="error-overlay">
+                <VBox alignment="CENTER" spacing="12" maxWidth="440">
+                    <padding>
+                        <Insets top="20" right="20" bottom="20" left="20"/>
+                    </padding>
+                    <Label text="⚠" styleClass="error-icon"/>
+                    <Label text="Couldn't reach Arena" styleClass="error-title"/>
+                    <Label fx:id="errorDetail" styleClass="error-detail" wrapText="true"
+                           alignment="CENTER" textAlignment="CENTER" maxWidth="Infinity"/>
+                    <HBox alignment="CENTER" spacing="10">
+                        <Button fx:id="retryButton" text="Retry" styleClass="primary-button" defaultButton="true"/>
+                        <Button fx:id="openExternalButton" text="Open in browser"/>
+                    </HBox>
+                </VBox>
+            </StackPane>
+        </StackPane>
+    </center>
+</BorderPane>

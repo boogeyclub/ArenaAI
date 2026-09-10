@@ -1,0 +1,51 @@
+package cm.odigital.arenaai;
+
+/**
+ * Central configuration for the Arena desktop application.
+ *
+ * <p>The desktop app is a thin wrapper: it shows a Discord-style splash
+ * screen on launch, then loads the Arena website in an embedded browser.</p>
+ */
+public final class ArenaConfig {
+
+    private ArenaConfig() {
+        // Utility class — no instances.
+    }
+
+    /** Website loaded inside the desktop app after the splash screen. */
+    public static final String HOME_URL = "https://arena.ai/";
+
+    /** Host considered "internal". Used for the address pill fallback. */
+    public static final String HOME_HOST = "arena.ai";
+
+    /** Base window title. The current page title is prepended to it. */
+    public static final String APP_TITLE = "Arena";
+
+    public static final String APP_VERSION = "1.0.0";
+
+    /**
+     * Minimum time in milliseconds the splash screen stays visible,
+     * even if the website finishes loading sooner.
+     */
+    public static final long SPLASH_MIN_VISIBLE_MS = 3200;
+
+    /**
+     * Maximum time in milliseconds to wait for the website before showing
+     * the main window anyway (with an offline/error state if needed).
+     */
+    public static final long SPLASH_MAX_WAIT_MS = 20_000;
+
+    /**
+     * Desktop Chrome-on-Windows user agent so arena.ai serves the full
+     * desktop experience inside the embedded browser.
+     */
+    public static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            + "AppleWebKit/537.36 (KHTML, like Gecko) "
+            + "Chrome/126.0.0.0 Safari/537.36 "
+            + "ArenaDesktop/" + APP_VERSION;
+
+    public static final double WINDOW_WIDTH = 1280;
+    public static final double WINDOW_HEIGHT = 800;
+    public static final double WINDOW_MIN_WIDTH = 1024;
+    public static final double WINDOW_MIN_HEIGHT = 640;
+}
